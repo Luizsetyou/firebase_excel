@@ -1,0 +1,46 @@
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+import pandas as pd
+import os
+
+# Initialize Firebase Admin SDK
+cred = credentials.Certificate("firebase-admin.json") 
+firebase_admin.initialize_app(cred)
+
+# Initialize Firestore
+db = firestore.client()
+
+# Define a referência para a coleção
+collection_ref = db.collection("bot-results")
+
+# Define a consulta limitada aos primeiros 500 documentos
+query = collection_ref.limit(500)
+
+# Criar uma lista vazia para armazenar todos os documentos
+documents = []
+
+# Buscar o lote inicial de documentos
+docs = list(query.stream())  # Converter gerador em lista
+for doc in docs:
+    objectDict = doc.to_dict()
+    object_data = [
+        objectDict.get('2idade', ''),  
+        objectDict.get('3sexo', ''), 
+        objectDict.get('email', ''), 
+        objectDict.get('name', ''),
+        objectDict.get('phone', ''),
+        objectDict.get('register_date', '')
+    ]
+    documents.append(object_data)
+
+# Converter a lista de dicionários para um DataFrame do pandas
+columns = ["2idade", "3sexo", "email", "name", "phone", "register_date"]
+df = pd.DataFrame(documents, columns=columns)
+
+# Salvar o DataFrame em um arquivo Excel
+try:
+    os.remove('botResults.xlsx')
+    df.to_excel('botResults.xlsx', index=False)
+except:
+    df.to_excel('botResults.xlsx', index=False)
